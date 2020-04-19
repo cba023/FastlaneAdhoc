@@ -1,0 +1,6 @@
+app_identifier(<你的Bundle ID>") # The bundle identifier of your app
+apple_id("<你的Apple ID>") # Your Apple email address
+
+
+# For more information about the Appfile, see:
+#     https://docs.fastlane.tools/advanced/#appfile

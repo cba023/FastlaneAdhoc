@@ -1,0 +1,61 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+require './controller'
+
+default_platform(:ios)
+
+platform :ios do
+  lane :adhoc do
+    cocoapods
+    build_app(scheme: ProjectConf.project_name,
+              workspace: ProjectConf.project_name + ".xcworkspace",
+              include_bitcode: true,
+              configuration: BuildConf.build_configuration,
+              export_method: BuildConf.app_export_method,
+              output_directory: ProjectConf.ipa_dir,
+              output_name: ProjectConf.ipa_name,
+              silent: false,
+              include_symbols: true,
+              export_xcargs: "-allowProvisioningUpdates",
+              export_options: {
+                  provisioningProfiles: {
+                      Controller.app_sign_conf["bundle_id"] => Controller.app_sign_conf["provisioning_profile"]
+                  }
+              })
+
+    # 打包成功后写入更新日志到本地
+    Controller.write_to_local_logs
+
+    # 分发应用到蒲公英
+    if BuildConf.is_upload_to_pgyer == true then
+      pgyer(
+          api_key: Controller.pgyer_conf["api_key"],
+          user_key: Controller.pgyer_conf["user_key"],
+          update_description: Controller.pgyer_build_article
+      )
+    end
+
+    # 钉钉群消息
+    if BuildConf.is_send_to_dingtalk == true then
+      Controller.send_ding_msg
+    end
+
+    # 上传符号表到bugly
+    if BuildConf.is_upload_dSYM_to_bugly == true then
+      Controller.upload_dSYM_to_bugly
+    end
+  end
+end
